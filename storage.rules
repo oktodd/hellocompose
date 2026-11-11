@@ -1,0 +1,20 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // T4.6: Fungsi pembantu untuk memastikan pengguna terautentikasi dan merupakan pemilik data
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/profile.jpg {
+      // Pembacaan hanya diizinkan untuk pemilik akun
+      allow read: if isOwner(userId);
+
+      // Penulisan/upload diizinkan jika pemilik, ukuran file < 1 MB, dan bertipe image/jpeg
+      allow write: if isOwner(userId)
+                   && request.resource.size < 1 * 1024 * 1024
+                   && request.resource.contentType == 'image/jpeg';
+    }
+  }
+}
